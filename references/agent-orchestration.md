@@ -81,7 +81,7 @@ ScheduleWakeup 唤醒后先查 TaskList / TaskOutput，按情况办：
 
 **数量判断以 SKILL.md Stage 0 的表格为唯一标准**（那张表更细、带预计耗时）。本文件不再重复，避免两处数字打架。
 
-competitor preset 默认 4，如果主题特别简单可以减；generic preset 默认 3。
+competitor preset 默认 4，investment preset 默认 4，如果主题特别简单可以减；generic preset 默认 3。
 
 ## 失败重试
 

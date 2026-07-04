@@ -35,6 +35,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 - **无参数**：自动识别主题类型，默认走 `competitor` preset（最常用）
 - `--type competitor` —— 强制走竞品调研模板（4 子 Agent，12 章结构，其中中国市场、隐私争议两章按需出现）
+- `--type investment` —— 投资决策调研模板（4 子 Agent，12 章结构，决策章为三档路径 + 触发条件）
 - `--type generic` —— 强制走通用兜底模板（3 子 Agent，弹性章节）
 - `--type industry` —— 行业/赛道调研（无专属 preset，用 generic 模板承载 + 弹性章节）
 - `--type person` —— 人物调研（无专属 preset，用 generic 模板承载 + 弹性章节）
@@ -52,10 +53,12 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 1. **解析输入**：从用户消息提取主题、类型暗示、URL
 2. **判类型**：
+   - 出现"值不值得买 / 该不该投 / 打不打新 / 投资价值"，或标的是股票 ticker / 上市及拟上市公司 / 主流加密资产 → `investment`
    - 出现"竞品 / 对比 / 想做和 X 一样"→ `competitor`
    - 出现"行业 / 赛道 / 市场" → `generic`（行业调研，弹性章节）
    - 出现具体人名 → `generic`（人物调研，弹性章节）
    - 不确定 → 默认 `competitor`（覆盖面最广，对错都有用）
+   - **investment vs competitor 的判据是意图不是标的**："调研 Cursor 想做一个类似的" → competitor；"Cursor 母公司要 IPO 了值得打吗" → investment
 3. **加载对应 preset**：读取 `references/preset-{type}.md`
 4. **判断 Agent 数量**：按下表自动选；如用户传 `--agents N` 直接用 N（覆盖自动判断）
 
@@ -64,12 +67,13 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
    | 简单事实 / 单点查询 | 1-2 | "Anthropic 最近发了几个 Sonnet 版本"、"X 公司创始人是谁" | 5-8 分钟 |
    | 单一产品 + 普通赛道 | 4 | "调研 Typeless"、"调研 ima" | 15-20 分钟 |
    | 单一产品 + 火热赛道 | 5 | "调研 Cursor"、"调研 Granola"（社区反馈维度多） | 20-25 分钟 |
+   | 投资标的（股票 / IPO / 币） | 4-5 | "SPCX 值得打新吗"、"舜宇光学现在能买吗"（业务多元的大公司取 5） | 20-30 分钟 |
    | 跨产品对比 | 5-6 | "Cursor vs Windsurf vs Cline" | 25-30 分钟 |
    | 行业 / 赛道全景 | 6-8 | "AI 编程工具 2026"、"AI 语音输入法赛道" | 30-45 分钟 |
    | 人物 / 个人深度 | 2-3 | "Pieter Levels 在做什么"、"Sam Altman 最近 6 个月动向" | 10-15 分钟 |
 
    判断规则：
-   - 数量 < preset 默认（competitor 4 / generic 3）→ 跑前 N 个 Agent，按 preset prompt 排序优先级取
+   - 数量 < preset 默认（competitor 4 / investment 4 / generic 3）→ 跑前 N 个 Agent，按 preset prompt 排序优先级取
    - 数量 > preset 默认 → 复用现有 prompts + 增加额外维度（如开发者社区 / 行业分析师视角 / 历史对比 / 监管政策等）
 
 5. **透明告知 + 默认接受**：用一句话告诉用户决策：
@@ -107,7 +111,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 所有子 Agent 完成后：
 1. 读取 `/tmp/ray-research/{slug}/agent-*.md` 全部落盘结果（**不要只凭返回摘要整合**——摘要丢细节），整合成大纲写入同目录 `outline.md`。落盘的意义：上下文被压缩时素材随时可重读，40 分钟的调研不会白跑
-2. 按 preset 中的 "复刻可行性 + 决策建议" 章节模板做战略分析
+2. 按所选 preset 的决策章节模板做战略分析（competitor：复刻可行性 + Path A/B/C；investment：估值 + 三档路径 + 触发条件；generic：actionable insights）
 3. 一手来源校验：每个数字至少标注来源；明显幻觉（如"$30M Series A 没有依据"）必须做风险提示
 
 ### Stage 2.5 · 数据真实性验证（**必跑**，除非 --quick）
@@ -174,6 +178,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 **当前可用 preset**：
 - `references/preset-competitor.md` — 竞品调研（默认）
+- `references/preset-investment.md` — 投资决策调研（股票 / IPO / 币）
 - `references/preset-generic.md` — 通用兜底
 
 **新增 preset 流程**：复制 generic preset → 改 5 个部分 → 在 SKILL.md 加 `--type X` 入口。
@@ -185,6 +190,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 | 文件 | 何时加载 |
 |------|---------|
 | `references/preset-competitor.md` | 走 competitor preset 时 |
+| `references/preset-investment.md` | 走 investment preset 时（股票 / IPO / 币的投资决策） |
 | `references/preset-generic.md` | 走 generic preset 时 |
 | `references/agent-orchestration.md` | Stage 1 编排子 Agent 时 |
 | `references/data-verification.md` | **Stage 2.5 数据真实性验证（必读）** |
