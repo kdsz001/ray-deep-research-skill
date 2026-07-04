@@ -7,6 +7,8 @@
 - HTML 已生成在 `~/Downloads/{name}-research-{YYYYMMDD}.html`
 - web-access skill 的 CDP Proxy 已运行（如未运行，先 `bash ~/.claude/skills/web-access/scripts/check-deps.sh`）
 
+**sidebar 资源 404 属预期，不要修**：自检阶段报告还在 Downloads，`<head>` 里的 `../assets/sidebar.css` / `sidebar.js` 是为发布后的仓库目录结构准备的相对路径，此时 404 是正常的（静默失败，不影响主体渲染）。不要因此改路径或删注入——发布到 `~/ray-research/{topic}/` 后它们自然生效。
+
 **CDP 起不来时的降级**：check-deps 修复后 CDP 仍不可用 → **跳过本 Stage，照常走 Stage 5 交付**，但交付总结里必须明确写"本次未做视觉自检，建议自己打开报告过一眼"。不要因为自检环节挂了卡住整个交付，也不要假装自检过了。
 
 ## 自检流程（5 步）

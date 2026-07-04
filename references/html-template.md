@@ -179,6 +179,19 @@ main {
 左侧 3px 竖线 + paper 浅底。`.warn` 红 / `.data` 蓝 / 默认黑。
 顶部 mono uppercase label + `.callout-quote` 衬线 italic 17px。
 
+### 数据可信度标注（Stage 2.5 验证结果必须带进 HTML）
+高 stake 数字在 label 的 `.src` 灰字里带验证状态；未验证项汇总进一个 `.callout.warn` 块（骨架组件示例库里已有"⚠ 数据真伪提醒"示例）。
+
+```html
+<!-- 已交叉验证：在来源后加 ✓ + 日期 -->
+<div class="label">融资金额<span class="src">Crunchbase ✓ 已交叉验证 2026-05-18</span></div>
+
+<!-- 未交叉验证：来源后加 ⚠ 标记（保留数字，不删除） -->
+<div class="label">月访问量<span class="src">SimilarWeb · ⚠ 未交叉验证</span></div>
+```
+
+footer 加一行汇总：`本报告 N 个高 stake 数据点已通过 Stage 2.5 独立验证（X 个交叉验证 / Y 个未验证）`。完整规则与处理表见 `data-verification.md` 的"输出格式约束"。
+
 ### 时间线（Timeline）
 3 列 grid：日期（mono 右对齐）+ dot（中间垂直线 + 圆点）+ 内容（衬线粗 title + 14px 描述）。
 dot 颜色：默认黑边 / `.warn` 红 / `.data` 蓝——颜色递进可叙事。

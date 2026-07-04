@@ -227,7 +227,7 @@ Confidence: HIGH | MEDIUM | LOW
 ## 与其它 Stage 的交互
 
 - **不影响 Stage 1**：子 Agent 还是各自调研，不要让他们自己内部验证（会拖慢、且容易"自我安慰"）
-- **影响 Stage 3**：HTML 渲染时需要带上验证标注（更新 `html-template.md` 的 Components 章节）
+- **影响 Stage 3**：HTML 渲染时必须带上验证标注——组件写法见 `html-template.md` 的"数据可信度标注"小节，处理规则见本文档上方"输出格式约束"
 - **影响 Stage 4**：CDP 自检时多看一项——"⚠ 未交叉验证"标注是否清晰可见
 - **影响 Stage 5**：发布时 commit message 可以提"N 个数据点交叉验证"作为信号
 

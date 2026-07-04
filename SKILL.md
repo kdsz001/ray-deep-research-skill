@@ -150,9 +150,9 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 1. **决定话题分组名**（优先级：用户 --topic > 产品/公司名 > 赛道短名 > 人物名 > 不确定时让用户确认）
 2. **准备文件结构**：复制 HTML 到 `~/ray-research/{topic}/{YYYY-MM-DD}-{slug}.html`
-3. **更新 README**（话题子 README + 主 README INDEX 区块）
+3. **运行 `scripts/add-report.py` 一键更新全部 5 处索引**（manifest.json / 话题 README / 话题 index.html / 主 README / 主 index.html）——**不要手工改**，手工改五处必漏（详见 `publish.md`，含脚本报错时的手工兜底顺序）
 4. **git add + commit + push** 到 `kdsz001/ray-research` main 分支
-5. `open` 命令在用户主浏览器打开本地 HTML（除非 --no-open）
+5. `open` 打开**仓库里那份** `~/ray-research/{topic}/{file}.html`（除非 --no-open）——不要打开 Downloads 工作副本，sidebar 资源是相对路径，只有仓库目录结构下才能加载
 6. PushNotification 通知用户（防止用户已离开）
 7. 简短交付总结：核心发现 3 条 + 本地路径 + **GitHub Pages URL**（https://kdsz001.github.io/ray-research/{topic}/{file}）+ 建议下一步
 
