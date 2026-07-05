@@ -257,5 +257,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 - [ ] CDP 自检至少 3 张截图（首屏、中段、末段）
 - [ ] HTML 基于 `references/template.html` 骨架生成（自动保证 `<main>` 容器、light + dark 双模式、sidebar 注入——填内容时不要改动骨架部分）
 - [ ] 已发布到 GitHub 仓库（除非 --no-publish）+ 已运行 `scripts/add-report.py` 更新全部索引
+- [ ] 共享库已查（配了 exchange 时；命中已给"看现成 / 重跑"二选一 + 埋点）
+- [ ] 跑完已静默报 run 事件 + 已问是否上传共享库（配了 exchange 时）
 - [ ] open 命令打开本地 HTML + PushNotification 通知
 - [ ] 交付总结 ≤ 250 字，含 3 条核心发现 + 本地路径 + GitHub Pages URL

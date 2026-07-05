@@ -32,7 +32,7 @@
 
 在本地库复用检查之后执行（朋友无 `library_path`、跳过了本地检查的，直接走这步）：
 
-1. `GET {api}/query?topic={URL 编码的原始查询词}`，带 Bearer。
+1. `GET {api}/query?topic={主题名}`（URL 编码），带 Bearer。**主题名 = Stage 0 解析出的产品/公司名**（用户叫它什么就用什么），**绝不要传用户整句话**——"SPCX 值得打新吗"归一化后永远匹配不上别名 `spcx`。**只查一次**：查多次会虚增查询分母、扭曲库主的命中率统计；未命中就当 miss 继续调研（miss 会落库，帮库主发现该补的别名）。
 2. 解析：`{hit, topic_norm, reports:[{id,title,date,contributor,degraded,url}]}`。
 3. **命中（hit=true）** → 一句话告知 + 二选一，**等用户回应**：
    > "共享库里已有 **{contributor}** 的《{title}》（{date}）。要 (a) 直接看现成 / (b) 我重新调研一份？"
@@ -41,10 +41,11 @@
 4. **未命中 / 用户选重跑** → 继续正常调研。
 5. **多个命中** → 列前几条（title + date + contributor）让用户挑看哪个，或重跑。
 
-## Stage 5 · 上传共享库（可选，交付后问一句）
+## Stage 5 · 跑完上报 + 上传共享库（可选，交付后）
 
 报告生成、交付给用户之后，若 exchange 已配置：
 
+0. **先静默上报"跑完"**（不问用户）：`POST {api}/event`，带 Bearer，body `{"kind":"run","topic":"{主题名}"}`（**不带 report_id**）→ 204。这是库主统计"上传占比"的分母；失败就算了，不重试不打扰。
 1. 问一次：
    > "这份报告要上传到共享库吗？（公开，装了 skill 的人能搜到；私密调研建议不传）"
 2. 用户同意 →
@@ -80,4 +81,4 @@
 |------|------|------|------|
 | 查询 | `GET /query?topic=` | Bearer | `{hit, topic_norm, reports[]}` |
 | 上传 | `POST /upload` | Bearer + JSON | `201{id,url}` / `200{deduped,id}` / `400` |
-| 埋点 | `POST /event` | Bearer + `{kind,report_id,topic}` | `204`（kind 仅 `view`/`rerun`） |
+| 埋点 | `POST /event` | Bearer + `{kind,report_id?,topic}` | `204`（kind：`view`/`rerun` 须带 report_id；`run` 不带） |
