@@ -109,6 +109,8 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 5. **用户选 (b) 只更新** → 只 dispatch 与时效数据相关的子 Agent（团队融资、口碑反馈），复用旧报告的结构性章节（产品定位、技术、竞品格局），整合时把新数据替换进旧版，文件名加 `-v2` 后缀（见 `publish.md` 守则 2）
 6. **用户选 (c) 看旧版** → 直接 `open` 旧报告，结束本次调研
 
+**共享库复用（若配了 `~/.config/ray-deep-research/exchange.json`）**：本地库检查之后（朋友无 `library_path`、跳过了本地检查的直接走这步），按 `references/exchange.md` 查共享库 registry —— 命中给"看现成 / 重跑"二选一（看现成则 `open` url + 埋点）。共享库故障绝不阻塞调研。
+
 ### Stage 1 · 并行调研编排
 
 按 preset 中的 sub-agent prompts 章节，**一次性 dispatch 所有子 Agent 进入 background**。
@@ -176,6 +178,8 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 **注意**：仓库公开。如调研涉及用户的私密决策，提前提醒用户，让他选 `--no-publish`。
 
+8. **上传共享库（若配了 exchange）**：交付后按 `references/exchange.md` 问一句"是否上传到共享库"——同意则内联 sidebar + 算 content_hash + `POST /upload`；私密调研不传。共享库故障不影响已完成的本地交付。
+
 ---
 
 ## Preset 系统
@@ -214,6 +218,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 | `references/self-check.md` | Stage 4 CDP 自检时 |
 | `references/publish.md` | Stage 5 发布到 GitHub 时 |
 | `references/sample-output.html` | 视觉参照（已含 light + dark 双模式） |
+| `references/exchange.md` | **Stage 0.5 查共享库 / Stage 5 上传共享库**（配了 exchange.json 时） |
 
 ---
 
