@@ -6,7 +6,7 @@
 
 ## 仓库信息
 
-- **路径**：`/Users/pipiwang/ray-research/`（已 clone）
+- **路径**：`~/ray-research/`（已 clone）
 - **GitHub URL**：https://github.com/kdsz001/ray-research
 - **GitHub Pages**：https://kdsz001.github.io/ray-research/
 - **可见性**：公开 Public
@@ -30,7 +30,7 @@
 ```bash
 TOPIC="typeless"
 DATE=$(date +%Y-%m-%d)
-TARGET_DIR="/Users/pipiwang/ray-research/$TOPIC"
+TARGET_DIR="$HOME/ray-research/$TOPIC"
 TARGET_FILE="$TARGET_DIR/$DATE-$TOPIC.html"
 
 mkdir -p "$TARGET_DIR"
@@ -53,7 +53,7 @@ cp "$LOCAL_REPORT" "$TARGET_FILE"
 仓库启用了 `.nojekyll`，每个目录都要有 index.html 入口 + README.md（GitHub 代码视图），外加 manifest.json 驱动全局 sidebar——一共 5 处索引。**全部用脚本统一更新，不要手工改**（手工改五处必漏，曾导致"报告上传了但 sidebar 看不到"）：
 
 ```bash
-cd /Users/pipiwang/ray-research
+cd ~/ray-research
 
 # 已有话题追加报告：
 python3 scripts/add-report.py \
@@ -76,7 +76,7 @@ python3 scripts/add-report.py \
 ### Step 4 · git commit + push
 
 ```bash
-cd /Users/pipiwang/ray-research
+cd ~/ray-research
 git add -A
 git commit -m "$(cat <<'EOF'
 feat({{topic}}): 新增 {{date}} {{title}}

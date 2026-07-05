@@ -16,7 +16,7 @@
 ### Step 1 · 在后台 tab 加载 HTML
 
 ```bash
-curl -s "http://localhost:3456/new?url=file:///Users/pipiwang/Downloads/{file}.html"
+curl -s "http://localhost:3456/new?url=file://$HOME/Downloads/{file}.html"
 # 拿到 targetId
 ```
 
@@ -64,7 +64,7 @@ curl -s "http://localhost:3456/screenshot?target={ID}&file=/tmp/check-{n}.png"
 
 发现问题 → 用 Edit 工具修 HTML → 不需要重新 dispatch CDP，直接刷新：
 ```bash
-curl -s "http://localhost:3456/navigate?target={ID}&url=file:///Users/pipiwang/Downloads/{file}.html"
+curl -s "http://localhost:3456/navigate?target={ID}&url=file://$HOME/Downloads/{file}.html"
 sleep 0.5
 # 重新截图验证
 ```
