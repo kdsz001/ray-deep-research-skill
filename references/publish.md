@@ -2,6 +2,8 @@
 
 调研报告生成 + 自检完成后，**自动同步到公开仓库** `kdsz001/ray-research`。让用户能用 URL 分享给别人。
 
+**前提（通用版）**：本流程仅在配置文件（`~/.config/ray-deep-research/config.json`，见 `environment.md`）里 `publish.enabled=true` 时执行；未配置 → 视同 `--no-publish`，整个文件跳过。下文所有仓库路径 / URL 均为 Ray 的配置示例值，实际以配置为准。
+
 ## 仓库信息
 
 - **路径**：`/Users/pipiwang/ray-research/`（已 clone）

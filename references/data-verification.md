@@ -152,7 +152,7 @@ Confidence: HIGH | MEDIUM | LOW
 
 ### Step 4 · 主 Agent 逐项核查 + 修复
 
-主 Agent 读取审查输出，对每个 suspect 用 `web-access` skill 实际核查：
+主 Agent 读取审查输出，对每个 suspect 用浏览器工具实际核查（按 `environment.md` 当前模式选工具；degraded 模式用 WebFetch 尽力，查不到保留"未交叉验证"标注）：
 
 ```
 对于每个 [SUSPECT-{{id}}]:

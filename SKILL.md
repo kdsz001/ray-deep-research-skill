@@ -47,6 +47,18 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 ---
 
+## 环境自检与模式（开跑前必做）
+
+按 `references/environment.md` 静默完成（秒级）：探测浏览器引擎（web-access → Playwright MCP → 无）+ 读配置文件 `~/.config/ray-deep-research/config.json`（可选），确定本次模式：
+
+- **full**（任一浏览器引擎可用）→ 全流程照常
+- **degraded**（无引擎且用户已确认降级）→ WebSearch/WebFetch 尽力调研，报告顶部加"⚠ 未走浏览器直读"标注
+- **首次缺引擎** → 停下来引导安装（仅此一次，话术见 environment.md）
+
+子 Agent prompt 里的 `{{BROWSER_ACCESS}}` 占位符按 environment.md 替换表填充。个人库（Stage 0.5）与发布（Stage 5）是否启用同样由配置决定——无配置时跳过 0.5、视同 `--no-publish`。
+
+---
+
 ## 工作流（必须按顺序）
 
 ### Stage 0 · 主题解析 + preset 选择 + Agent 数量判断
@@ -87,6 +99,8 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 **在 Stage 0 判断之后、Stage 1 dispatch 之前执行。** 这是 Stage 0 "立即 dispatch 不等回应" 的唯一例外——命中已有报告时值得停下来问一句，因为重跑整份成本高（时间 + token）。
 
+**前提**：需要个人报告库（配置 `library_path`，Ray 为 `~/ray-research`）。未配置或目录不存在 → 跳过本步直接进 Stage 1。
+
 1. 直接搜权威索引：`grep -i "{产品/公司名}" ~/ray-research/manifest.json`（中英文名都搜一遍——manifest 是仓库唯一权威索引，比"猜 slug 再 ls 目录"可靠，猜错 slug 会漏检导致整份重跑）
 2. 命中后读该话题的 `reports` 数组，拿到最新报告的日期与文件名
 3. **若存在近期报告（≤ 30 天）**：用一句话告知 + 给三选项，**等用户回应**：
@@ -121,7 +135,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 1. **提取高 stake 数据清单**：把整合后的数据按 6 类（融资/用户量/公司档案/媒体奖项/时效性/合规）提成 markdown 清单
 2. **检测验证器**：`which codex` 有结果 → 走 Codex；没有 → 派独立 Claude 子 Agent 做 fallback
 3. **独立审查**：让审查器（Codex 或独立子 Agent）输出 suspect 清单，每条含 likely issue + recommended action + confidence
-4. **逐项核查 + 修复**：主 Agent 用 `web-access` 去原始来源核查每个 suspect，按规则处理：
+4. **逐项核查 + 修复**：主 Agent 用浏览器工具去原始来源核查每个 suspect（按 environment.md 当前模式选工具；degraded 模式用 WebFetch 尽力核查，查不到的保留"未交叉验证"标注），按规则处理：
    - 已交叉验证 → 保留 + 加"✓ 已交叉验证"标注
    - 数字不同 → 改正 + 标注
    - 找不到原始来源 → 保留数字 + 标"⚠ 未交叉验证"（**不要删除**）
@@ -140,7 +154,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 ### Stage 4 · CDP 自检 + 迭代（除非 --quick）
 
-按 `references/self-check.md` 流程：
+按 `references/self-check.md` 流程（web-access 模式专属；playwright 模式可用其截图做简化自检，degraded 模式跳过并在交付时说明——见 environment.md 行为矩阵）：
 1. 用 web-access skill 的 CDP API 在后台 tab 加载 HTML
 2. 截图首屏 + Quick Facts + 几个关键章节
 3. 视觉评估：是否有显示 bug、中文换行不当、对比度不够、章节遗漏
@@ -150,12 +164,12 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 ### Stage 5 · 发布到 GitHub 仓库 + 交付
 
-按 `references/publish.md` 流程：
+按 `references/publish.md` 流程。**前提**：配置文件里 `publish.enabled=true` 才执行；未配置 → 视同 `--no-publish`，跳过 1-4 步只做本地交付（5-7 步）。
 
 1. **决定话题分组名**（优先级：用户 --topic > 产品/公司名 > 赛道短名 > 人物名 > 不确定时让用户确认）
 2. **准备文件结构**：复制 HTML 到 `~/ray-research/{topic}/{YYYY-MM-DD}-{slug}.html`
 3. **运行 `scripts/add-report.py` 一键更新全部 5 处索引**（manifest.json / 话题 README / 话题 index.html / 主 README / 主 index.html）——**不要手工改**，手工改五处必漏（详见 `publish.md`，含脚本报错时的手工兜底顺序）
-4. **git add + commit + push** 到 `kdsz001/ray-research` main 分支
+4. **git add + commit + push** 到配置的发布仓库 main 分支（Ray：`kdsz001/ray-research`）
 5. `open` 打开**仓库里那份** `~/ray-research/{topic}/{file}.html`（除非 --no-open）——不要打开 Downloads 工作副本，sidebar 资源是相对路径，只有仓库目录结构下才能加载
 6. PushNotification 通知用户（防止用户已离开）
 7. 简短交付总结：核心发现 3 条 + 本地路径 + **GitHub Pages URL**（https://kdsz001.github.io/ray-research/{topic}/{file}）+ 建议下一步
@@ -189,6 +203,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 | 文件 | 何时加载 |
 |------|---------|
+| `references/environment.md` | **开跑前环境自检（必读）**：模式判定 / 首次引导安装 / {{BROWSER_ACCESS}} 替换表 |
 | `references/preset-competitor.md` | 走 competitor preset 时 |
 | `references/preset-investment.md` | 走 investment preset 时（股票 / IPO / 币的投资决策） |
 | `references/preset-generic.md` | 走 generic preset 时 |
@@ -222,6 +237,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 ## 一键自查清单（提交前过一遍）
 
+- [ ] 环境自检已完成、模式已定（degraded 模式：报告顶部已加"⚠ 未走浏览器直读"callout）
 - [ ] 主题已确认 + preset 已选择 + 已告诉用户预计时长
 - [ ] Stage 0.5 复用检查已做（仓库有 ≤30 天同主题报告则已问用户：重做 / 只更新 / 看旧版）
 - [ ] 已按 Stage 0 表格判定的数量并行 dispatch 子 Agent

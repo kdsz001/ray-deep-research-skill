@@ -15,7 +15,7 @@
 
 ## 2. 子 Agent prompts（4 个并行）
 
-**调度规则**：4 个子 Agent 同时 dispatch + run_in_background=true。每个子 Agent 必须包含"必须加载 web-access skill 并遵循指引"。每个 prompt 把"{{TARGET}}"替换为调研主题。
+**调度规则**：4 个子 Agent 同时 dispatch + run_in_background=true。每个 prompt 把"{{TARGET}}"替换为调研主题、把"{{BROWSER_ACCESS}}"替换为 `environment.md` 按当前模式给出的浏览器能力指令段。
 
 ### 输出规范（所有 4 个子 Agent 必须遵循 · 必须 inline 到每个 prompt 末尾）
 
@@ -34,7 +34,7 @@
 ```
 你是一名竞品调研员。任务是：全面收集 {{TARGET}} 在英文社区的真实用户评价和市场反馈。
 
-必须加载 web-access skill 并遵循指引。
+{{BROWSER_ACCESS}}
 
 需要覆盖的平台：
 1. **Product Hunt** — 搜该产品主页 + 评论页 + launches + awards 子页 — 拿到上榜情况、当日排名、获奖、所有评论的好评/差评要点、Maker 的回应。**重点核实"App of the Year"等奖项是否真实存在**（PH 只有 Launch Awards 这一类）
@@ -62,7 +62,7 @@
 ```
 你是一名竞品调研员。任务是：调研 {{TARGET}} 在中文世界的认知度、口碑和用户反馈。
 
-必须加载 web-access skill 并遵循指引。
+{{BROWSER_ACCESS}}
 
 需要覆盖的平台（这些都需要 CDP 浏览器访问，反爬严重）：
 1. **小红书** — 搜产品名 + 类目相关词，提取 KOL 和素人的使用体验
@@ -92,7 +92,7 @@
 ```
 你是一名竞品调研员。任务是：对 {{TARGET}} 所在赛道做完整横向对比。
 
-必须加载 web-access skill 并遵循指引。
+{{BROWSER_ACCESS}}
 
 第一步：识别 5-8 个主要竞品（必须包含赛道明确的 Top 1-3）。来源：{{TARGET}} 官网的对比页 / G2 / Capterra / Reddit 上的"X vs Y"帖 / 行业评测文章。
 
@@ -128,7 +128,7 @@
 ```
 你是一名竞品调研员。任务是：挖出 {{TARGET}} 的公司、团队、融资、流量、用户量级信息。
 
-必须加载 web-access skill 并遵循指引。
+{{BROWSER_ACCESS}}
 
 需要查的：
 1. **公司/创始人**
