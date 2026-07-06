@@ -122,6 +122,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 - 全部 `run_in_background: true`
 - 用 ScheduleWakeup 设 1500s 兜底，task-notification 自动唤醒；唤醒后若仍有子 Agent 未完成，按 `agent-orchestration.md` 的"兜底唤醒后的处置"规则办
 - 每个子 Agent 完成时更新 TaskList
+- **环境不支持并行子 Agent 时的 fallback（勿把 spawn 子 agent 当硬依赖）**：部分环境（如 Codex 的工具策略）不允许自动开子 agent——此时主 Agent 按 preset 里的子 Agent prompts **逐个顺序执行**同样的调研维度，每个维度的完整结果照样落盘 `/tmp/ray-research/{slug}/agent-{n}.md`，之后的 Stage 完全不变。顺序执行更耗时，开跑前把预计时长上调（约 1.5-2 倍）并如实告知用户。
 
 ### Stage 2 · 整合 + 复刻分析
 
