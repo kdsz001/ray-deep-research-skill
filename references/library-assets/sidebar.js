@@ -98,8 +98,11 @@
 
   // ----- Sidebar HTML 渲染 -----
   function render(manifest) {
-    // 如 manifest 提供了 base_url 且与 inferBase 不同，以 manifest 为准
-    if (manifest.site.base_url && typeof manifest.site.base_url === 'string') {
+    // 如 manifest 提供了 base_url 且与 inferBase 不同，以 manifest 为准。
+    // 但 file:// 本地打开时必须忽略它——base_url 是网站部署路径（如 /ray-research/），
+    // 用它拼链接会指向 file:///ray-research/...（不存在）；本地只信 inferBase 的真实路径。
+    if (manifest.site.base_url && typeof manifest.site.base_url === 'string' &&
+        window.location.protocol !== 'file:') {
       BASE = manifest.site.base_url;
       if (BASE.charAt(BASE.length - 1) !== '/') BASE += '/';
     }
