@@ -6,11 +6,11 @@
 
 **每次出报告都从 `references/template.html` 复制起步，不要从零写 HTML**——每次重写 2000 行 CSS/JS 就是每次重新引入 bug 的机会（`<main>` 命名坑就是这么踩的）。
 
-1. `cp references/template.html ~/Downloads/{name}-research-{YYYYMMDD}.html`
+1. `cp references/template.html ~/.cache/ray-deep-research/{slug}/report.html`（工作目录，见 checkpoint.md）
 2. 全文搜索 `{{ }}` 占位符逐个替换（title / topbar / hero / Quick Facts / footer）
-3. 按 preset 章节结构在 `<article>` 内增删 `<section>`；各组件标准写法直接从文件底部 `<template id="component-examples">` 块里复制出来填数据
+3. 按 preset 章节结构在 `<article>` 内增删 `<section>`——**一章一章分次写入文件，每写完一章更新 STATE.md**（防爆窗，见 checkpoint.md），绝不一次输出整份；各组件标准写法直接从文件底部 `<template id="component-examples">` 块里复制出来填数据
 4. 交付前删除底部 `<template id="component-examples">` 整块
-5. **骨架部分不要动**：`<head>` 内全部 CSS / 防 FOUC 脚本 / sidebar 注入两行 / 主题切换按钮 / 底部 JS
+5. **骨架部分不要动**：`<head>` 内全部 CSS / 防 FOUC 脚本 / sidebar 注入三行 / 主题切换按钮 / 底部 JS
 
 本文件其余部分是骨架的设计规范说明——填内容时拿不准"该用哪个组件 / 什么颜色"再查，不需要照着重写样式。
 

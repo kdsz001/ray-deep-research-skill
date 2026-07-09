@@ -24,7 +24,7 @@
 
 （上面是 Ray 本人的配置示例。）
 
-**无配置文件时的默认**：`browser: auto`（按下节探测）；无个人库 → 跳过 Stage 0.5；无 publish 配置 → 视同 `--no-publish`（只本地交付）；`degraded_ack: false`。
+**无配置文件时的默认**：`browser: auto`（按下节探测）；个人库用默认收藏夹 `~/ResearchLibrary`（Stage 0.5 查它、Stage 5 入它，见 `library.md`）；无 publish 配置 → 视同 `--no-publish`（报告只进本地收藏夹，不联网）；`degraded_ack: false`。
 
 ---
 

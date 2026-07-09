@@ -41,7 +41,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 - `--type person` —— 人物调研（无专属 preset，用 generic 模板承载 + 弹性章节）
 - `--quick` —— 跳过 Stage 2.5 数据验证 + Stage 4 CDP 自检 loop，更快但数据与视觉不一定有保证
 - `--no-open` —— 生成 HTML 但不自动开浏览器
-- `--no-publish` —— 不 push 到 GitHub 仓库（仅本地保留，适合私密内容）
+- `--no-publish` —— 不发布到 GitHub 公开仓库（报告只进本地收藏夹，适合私密内容；未配置 publish 的用户本来就是这个默认）
 - `--topic <名>` —— 显式指定话题分组名（覆盖自动推断）
 - `--agents N` —— 显式指定子 Agent 数量（覆盖自动判断），N = 1-8
 
@@ -55,7 +55,17 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 - **degraded**（无引擎且用户已确认降级）→ WebSearch/WebFetch 尽力调研，报告顶部加"⚠ 未走浏览器直读"标注
 - **首次缺引擎** → 停下来引导安装（仅此一次，话术见 environment.md）
 
-子 Agent prompt 里的 `{{BROWSER_ACCESS}}` 占位符按 environment.md 替换表填充。个人库（Stage 0.5）与发布（Stage 5）是否启用同样由配置决定——无配置时跳过 0.5、视同 `--no-publish`。
+子 Agent prompt 里的 `{{BROWSER_ACCESS}}` 占位符按 environment.md 替换表填充。个人库（Stage 0.5）与发布（Stage 5）是否启用同样由配置决定——无配置时跳过 0.5、Stage 5 走本地收藏夹入库（见 `references/library.md`）。
+
+---
+
+## 存档与续跑（最高优先级，先于一切阶段）
+
+长调研必须假设上下文窗口随时会满 / 会话随时中断。规矩全在 `references/checkpoint.md`（**开跑前必读**），核心三条：
+
+1. **工作目录** `~/.cache/ray-deep-research/{slug}/`：STATE.md（进度总控）+ agent-*.md + outline.md + verification.md + report.html。任何阶段产物一完成立刻落盘，STATE.md 随之更新。
+2. **恢复**：用户说"继续调研 X"，或解析出 slug 后发现 STATE.md 已存在且未标 DONE → 读 STATE.md 从第一个未完成阶段继续，**已完成的绝不重跑**。
+3. **单窗口环境**（Codex、扣子等无法并行子 Agent 的）：严格执行 checkpoint.md 的"边读边炼"纪律；上下文吃紧时主动存档换窗，不硬撑到爆。
 
 ---
 
@@ -99,9 +109,9 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 
 **在 Stage 0 判断之后、Stage 1 dispatch 之前执行。** 这是 Stage 0 "立即 dispatch 不等回应" 的唯一例外——命中已有报告时值得停下来问一句，因为重跑整份成本高（时间 + token）。
 
-**前提**：需要个人报告库（配置 `library_path`，Ray 为 `~/ray-research`）。未配置或目录不存在 → 跳过本步直接进 Stage 1。
+**前提**：需要个人报告库——配置了 `library_path` 用它（Ray 为 `~/ray-research`）；未配置则查默认收藏夹 `~/ResearchLibrary`；两者都不存在 → 跳过本步直接进 Stage 1。
 
-1. 直接搜权威索引：`grep -i "{产品/公司名}" ~/ray-research/manifest.json`（中英文名都搜一遍——manifest 是仓库唯一权威索引，比"猜 slug 再 ls 目录"可靠，猜错 slug 会漏检导致整份重跑）
+1. 直接搜权威索引：`grep -i "{产品/公司名}" {库路径}/manifest.json`（中英文名都搜一遍——manifest 是库的唯一权威索引，比"猜 slug 再 ls 目录"可靠，猜错 slug 会漏检导致整份重跑）
 2. 命中后读该话题的 `reports` 数组，拿到最新报告的日期与文件名
 3. **若存在近期报告（≤ 30 天）**：用一句话告知 + 给三选项，**等用户回应**：
    > "仓库里已有 **{date}** 的《{title}》。要 (a) 全新重做 / (b) 只更新有变化的部分（融资 / 口碑 / 排名 / 流量）/ (c) 先看旧版？"
@@ -116,19 +126,19 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 按 preset 中的 sub-agent prompts 章节，**一次性 dispatch 所有子 Agent 进入 background**。
 
 子 Agent 调度规则详见 `references/agent-orchestration.md`。核心原则：
-- dispatch 前先 `mkdir -p /tmp/ray-research/{slug}`，每个子 Agent 的 prompt 末尾指定输出文件路径（完整结果写文件 + 末尾写 `<!-- RESEARCH-COMPLETE -->` 完成标记，返回消息只要 ≤500 字摘要）——防长任务上下文压缩丢素材
-- **断点续跑检查（dispatch 前必做）**：若 `/tmp/ray-research/{slug}/` 已有带完成标记的 `agent-*.md`（上次限流/中断留下的存档），只补跑缺失维度，不整轮重跑——规则见 `agent-orchestration.md` 的"断点续跑"一节
+- dispatch 前先建工作目录 `~/.cache/ray-deep-research/{slug}` + 初版 STATE.md（见 `checkpoint.md`），每个子 Agent 的 prompt 末尾指定输出文件路径（完整结果写文件 + 末尾写 `<!-- RESEARCH-COMPLETE -->` 完成标记，返回消息只要 ≤500 字摘要）——防长任务上下文压缩丢素材
+- **断点续跑检查（dispatch 前必做）**：若工作目录已有带完成标记的 `agent-*.md`（上次限流/中断留下的存档），只补跑缺失维度，不整轮重跑——规则见 `agent-orchestration.md` 的"断点续跑"一节
 - 主 Agent 同时抓官网/主页核心事实（不要等子 Agent）
 - 子 Agent 数量 = Stage 0 第 4 步判断结果（不再写死 preset 默认）
 - 全部 `run_in_background: true`
 - 用 ScheduleWakeup 设 1500s 兜底，task-notification 自动唤醒；唤醒后若仍有子 Agent 未完成，按 `agent-orchestration.md` 的"兜底唤醒后的处置"规则办
 - 每个子 Agent 完成时更新 TaskList
-- **环境不支持并行子 Agent 时的 fallback（勿把 spawn 子 agent 当硬依赖）**：部分环境（如 Codex 的工具策略）不允许自动开子 agent——此时主 Agent 按 preset 里的子 Agent prompts **逐个顺序执行**同样的调研维度，每个维度的完整结果照样落盘 `/tmp/ray-research/{slug}/agent-{n}.md`，之后的 Stage 完全不变。顺序执行更耗时，开跑前把预计时长上调（约 1.5-2 倍）并如实告知用户。
+- **环境不支持并行子 Agent 时的 fallback（勿把 spawn 子 agent 当硬依赖）**：部分环境（如 Codex 的工具策略）不允许自动开子 agent——此时主 Agent 逐个顺序执行同样的调研维度，规则见 `agent-orchestration.md` 的"单窗口顺序执行"节。**此模式下所有原文流经主窗口，极易爆上下文**，必须严格执行 `checkpoint.md` 的"边读边炼"纪律（读 1-2 个来源就落盘要点、读过即弃、吃紧主动换窗）。
 
 ### Stage 2 · 整合 + 复刻分析
 
 所有子 Agent 完成后：
-1. 读取 `/tmp/ray-research/{slug}/agent-*.md` 全部落盘结果（**不要只凭返回摘要整合**——摘要丢细节），整合成大纲写入同目录 `outline.md`。落盘的意义：上下文被压缩时素材随时可重读，40 分钟的调研不会白跑
+1. 读取工作目录 `agent-*.md` 全部落盘结果（**不要只凭返回摘要整合**——摘要丢细节），整合成大纲写入同目录 `outline.md`，并更新 STATE.md。落盘的意义：上下文被压缩时素材随时可重读，40 分钟的调研不会白跑
 2. 按所选 preset 的决策章节模板做战略分析（competitor：复刻可行性 + Path A/B/C；investment：估值 + 三档路径 + 触发条件；generic：actionable insights）
 3. 一手来源校验：每个数字至少标注来源；明显幻觉（如"$30M Series A 没有依据"）必须做风险提示
 
@@ -145,16 +155,17 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
    - 找不到原始来源 → 保留数字 + 标"⚠ 未交叉验证"（**不要删除**）
    - 整个数据是 hallucination → 删除并在 HTML 顶部加"⚠ 数据真伪提醒"
 5. **循环上限 3 轮**：review → fix → review，无 HIGH suspect 或 3 轮后退出
+6. **落盘**：suspect 清单 + 每条核查结论写入工作目录 `verification.md`，更新 STATE.md——中断后新窗口不用重新审查
 
 **这一步是数据质量的核心防线**。Ray 拿这些报告做投资 / 创业决策，融资 / 估值 / 用户量 / 股价错一个就可能错决策。绝不能跳。
 
 ### Stage 3 · 渲染 HTML
 
-**复制 `references/template.html` 骨架，只填内容区**——CSS / JS / 夜间模式 / 打印样式 / sidebar 注入都已在骨架里固定，**不要从零重写样式**（每次重写 2000 行就是每次重新引入 bug 的机会）。组件写法与设计规范见 `references/html-template.md`，章节结构按 preset。
+**复制 `references/template.html` 骨架到工作目录 `report.html`，只填内容区**——CSS / JS / 夜间模式 / 打印样式 / sidebar 注入都已在骨架里固定，**不要从零重写样式**（每次重写 2000 行就是每次重新引入 bug 的机会）。组件写法与设计规范见 `references/html-template.md`，章节结构按 preset。
 
-输出路径：`~/Downloads/{主题安全名}-research-{YYYYMMDD}.html`
+**分章节写盘**：一章一章分次写入 report.html，每写完一章更新 STATE.md 的章节列表（防爆窗关键动作，规则见 `checkpoint.md`）。绝不在一次输出里生成整份 2000 行 HTML。
 
-主题安全名规则：去掉空格 + 中文转拼音/原样 + 全小写 + 短横线连接。
+成品留在工作目录，Stage 5 负责入库/发布（文件名规则：`{YYYY-MM-DD}-{主题安全名}.html`；主题安全名 = 去掉空格 + 中文转拼音/原样 + 全小写 + 短横线连接）。
 
 ### Stage 4 · CDP 自检 + 迭代（除非 --quick）
 
@@ -166,21 +177,27 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 5. 直到自评满意（Quick Facts 速览板渲染正常 + TL;DR 黑块对比强烈 + 表格信息密度合理）
 6. 关闭 CDP tab
 
-### Stage 5 · 发布到 GitHub 仓库 + 交付
+### Stage 5 · 入库 + 交付
 
-按 `references/publish.md` 流程。**前提**：配置文件里 `publish.enabled=true` 才执行；未配置 → 视同 `--no-publish`，跳过 1-4 步只做本地交付（5-7 步）。
+从工作目录的 `report.html` 出发，按配置分两条路。**共同的隐私边界：skill 永远不往任何网站上传报告**——电脑里的都是用户自己的；想分享到共享库，去共享库网站手动上传（指引见 `exchange.md` 的"分享"节）。
+
+**A · 默认（无 publish 配置）→ 本地收藏夹入库**，按 `references/library.md`：
 
 1. **决定话题分组名**（优先级：用户 --topic > 产品/公司名 > 赛道短名 > 人物名 > 不确定时让用户确认）
-2. **准备文件结构**：复制 HTML 到 `~/ray-research/{topic}/{YYYY-MM-DD}-{slug}.html`
-3. **运行 `scripts/add-report.py` 一键更新全部 5 处索引**（manifest.json / 话题 README / 话题 index.html / 主 README / 主 index.html）——**不要手工改**，手工改五处必漏（详见 `publish.md`，含脚本报错时的手工兜底顺序）
-4. **git add + commit + push** 到配置的发布仓库 main 分支（Ray：`kdsz001/ray-research`）
-5. `open` 打开**仓库里那份** `~/ray-research/{topic}/{file}.html`（除非 --no-open）——不要打开 Downloads 工作副本，sidebar 资源是相对路径，只有仓库目录结构下才能加载
-6. PushNotification 通知用户（防止用户已离开）
-7. 简短交付总结：核心发现 3 条 + 本地路径 + **GitHub Pages URL**（https://kdsz001.github.io/ray-research/{topic}/{file}）+ 建议下一步
+2. **运行 skill 自带 `scripts/add-to-library.py`**：首次自动创建 `~/ResearchLibrary`（可用 config 的 `library_path` 改位置），复制报告进库 + 更新清单与首页——全自动，**不要手工改清单文件**
+3. `open` 打开**库里那份**报告（除非 --no-open）——侧边栏列出用户做过的全部报告，像收藏夹；不要打开工作目录副本（侧栏资源是相对路径，只在库结构下能加载）
+4. PushNotification 通知 + 简短交付总结：核心发现 3 条 + 库内路径 + 建议下一步
 
-**注意**：仓库公开。如调研涉及用户的私密决策，提前提醒用户，让他选 `--no-publish`。
+**B · `publish.enabled=true`（Ray）→ 发布到 GitHub 仓库**，按 `references/publish.md` 流程：
 
-8. **上传共享库（若配了 exchange）**：交付后按 `references/exchange.md` 问一句"是否上传到共享库"——同意则内联 sidebar + 算 content_hash + `POST /upload`；私密调研不传。共享库故障不影响已完成的本地交付。
+1. 话题分组名（规则同 A.1）
+2. 复制 `report.html` 到 `~/ray-research/{topic}/{YYYY-MM-DD}-{slug}.html`
+3. **运行 `scripts/add-report.py` 一键更新全部 5 处索引**——不要手工改，手工改五处必漏（详见 `publish.md`，含脚本报错时的手工兜底顺序）
+4. git add + commit + push 到配置的发布仓库 main 分支（Ray：`kdsz001/ray-research`）
+5. `open` 打开**仓库里那份**（除非 --no-open）
+6. PushNotification + 交付总结：核心发现 3 条 + 本地路径 + **GitHub Pages URL** + 建议下一步
+
+**注意**：B 路仓库公开。如调研涉及用户的私密决策，提前提醒用户，让他选 `--no-publish`（B 路降级为 A 路入库）。
 
 ---
 
@@ -210,6 +227,8 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 | 文件 | 何时加载 |
 |------|---------|
 | `references/environment.md` | **开跑前环境自检（必读）**：模式判定 / 首次引导安装 / {{BROWSER_ACCESS}} 替换表 |
+| `references/checkpoint.md` | **开跑前必读**：工作目录 / STATE.md / 断点恢复 / 单窗口"边读边炼"纪律 |
+| `references/library.md` | Stage 0.5 查本地库 / Stage 5 A 路入库（默认交付方式） |
 | `references/preset-competitor.md` | 走 competitor preset 时 |
 | `references/preset-investment.md` | 走 investment preset 时（股票 / IPO / 币的投资决策） |
 | `references/preset-generic.md` | 走 generic preset 时 |
@@ -220,7 +239,7 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 | `references/self-check.md` | Stage 4 CDP 自检时 |
 | `references/publish.md` | Stage 5 发布到 GitHub 时 |
 | `references/sample-output.html` | 视觉参照（已含 light + dark 双模式） |
-| `references/exchange.md` | **Stage 0.5 查共享库 / Stage 5 上传共享库**（配了 exchange.json 时） |
+| `references/exchange.md` | **Stage 0.5 查共享库（只读）**（配了 exchange.json 时）；用户问"怎么分享"时的指引 |
 
 ---
 
@@ -248,8 +267,10 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 - [ ] 主题已确认 + preset 已选择 + 已告诉用户预计时长
 - [ ] Stage 0.5 复用检查已做（仓库有 ≤30 天同主题报告则已问用户：重做 / 只更新 / 看旧版）
 - [ ] 已按 Stage 0 表格判定的数量并行 dispatch 子 Agent
-- [ ] dispatch 前已做断点续跑检查（有上次中断的存档则只补跑缺失维度，并已告知用户）
-- [ ] 子 Agent 结果已落盘 `/tmp/ray-research/{slug}/agent-*.md`（每个文件末尾有完成标记），整合大纲已写 `outline.md`
+- [ ] dispatch 前已做断点续跑检查（有 STATE.md 或维度存档则从断点继续，已完成的没有重跑，并已告知用户）
+- [ ] 工作目录 `~/.cache/ray-deep-research/{slug}/` 已建 + STATE.md 随各阶段实时更新
+- [ ] 子 Agent 结果已落盘工作目录 `agent-*.md`（每个文件末尾有完成标记），整合大纲已写 `outline.md`
+- [ ] 单窗口环境：全程执行了"边读边炼"（没有连读多个来源不落盘的情况；吃紧时存档换窗而不是硬撑）
 - [ ] 主 Agent 同时抓了官网核心事实
 - [ ] ScheduleWakeup 兜底已设置
 - [ ] 所有子 Agent 完成后才开始整合
@@ -258,9 +279,8 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 - [ ] 决策建议有具体行动指南（Path A/B/C 或 30 天 checklist）
 - [ ] **外行可懂性**：随机抽查 3 处专业术语/复杂段落，确认都有白话注解或比喻，没有则补上
 - [ ] CDP 自检至少 3 张截图（首屏、中段、末段）
-- [ ] HTML 基于 `references/template.html` 骨架生成（自动保证 `<main>` 容器、light + dark 双模式、sidebar 注入——填内容时不要改动骨架部分）
-- [ ] 已发布到 GitHub 仓库（除非 --no-publish）+ 已运行 `scripts/add-report.py` 更新全部索引
-- [ ] 共享库已查（配了 exchange 时；命中已给"看现成 / 重跑"二选一 + 埋点）
-- [ ] 跑完已静默报 run 事件 + 已问是否上传共享库（配了 exchange 时）
-- [ ] open 命令打开本地 HTML + PushNotification 通知
+- [ ] HTML 基于 `references/template.html` 骨架生成（自动保证 `<main>` 容器、light + dark 双模式、sidebar 注入——填内容时不要改动骨架部分），且是**分章节**写入工作目录 report.html 的
+- [ ] 已入库交付：A 路已跑 `add-to-library.py` 入本地收藏夹 / B 路已发布 GitHub + `add-report.py` 更新全部索引
+- [ ] 共享库已查（配了 exchange 时；命中已给"看现成 / 重跑"二选一 + 埋点）；**没有做任何形式的上传或上传询问**
+- [ ] open 命令打开库里那份 HTML + PushNotification 通知
 - [ ] 交付总结 ≤ 250 字，含 3 条核心发现 + 本地路径 + GitHub Pages URL

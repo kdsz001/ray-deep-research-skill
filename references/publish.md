@@ -30,6 +30,7 @@
 ```bash
 TOPIC="typeless"
 DATE=$(date +%Y-%m-%d)
+LOCAL_REPORT="$HOME/.cache/ray-deep-research/$TOPIC/report.html"   # Stage 3 的工作目录成品
 TARGET_DIR="$HOME/ray-research/$TOPIC"
 TARGET_FILE="$TARGET_DIR/$DATE-$TOPIC.html"
 
@@ -37,14 +38,15 @@ mkdir -p "$TARGET_DIR"
 cp "$LOCAL_REPORT" "$TARGET_FILE"
 ```
 
-**生成报告 HTML 时必须在 `<head>` 注入这两行**（让全局 sidebar 生效）：
+**生成报告 HTML 时必须在 `<head>` 注入这三行**（让全局 sidebar 生效；template.html 骨架已自带，检查别丢）：
 
 ```html
 <link rel="stylesheet" href="../assets/sidebar.css">
+<script src="../assets/sidebar-data.js"></script>
 <script defer src="../assets/sidebar.js"></script>
 ```
 
-放在 Google Fonts 的 `<link>` 之后、防 FOUC 主题 `<script>` 之前。**用相对路径 `../assets/`**（不要绝对 `/ray-research/...`，避免本地 file:// 协议失效）。
+放在 Google Fonts 的 `<link>` 之后、防 FOUC 主题 `<script>` 之前。**用相对路径 `../assets/`**（不要绝对 `/ray-research/...`，避免本地 file:// 协议失效）。`sidebar-data.js` 行是给本地收藏夹用的（file:// 下 fetch 被浏览器拦截，靠它注入清单）；老站 `~/ray-research` 没有这个文件，404 静默无害，sidebar.js 会自动 fetch manifest.json 兜底。
 
 如果是话题 index.html 也加同样两行。如果是主 index.html（仓库根）—— 不加，主页本身是 landing 不需要 sidebar。
 

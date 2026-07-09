@@ -36,18 +36,19 @@
 **为什么**：行业全景模式 6-8 个 Agent 跑 30-45 分钟，回来的素材量巨大。主 Agent 的上下文（工作记忆）满了会被自动压缩，压掉的往往正是某个子 Agent 的原始素材——到 Stage 3 写报告时只剩模糊印象，调研等于白跑。落盘后文件随时可重读，不怕压缩。
 
 **怎么做**：
-1. dispatch 前：`mkdir -p /tmp/ray-research/{slug}`（slug 同 publish 话题名）
+1. dispatch 前：`mkdir -p ~/.cache/ray-deep-research/{slug}`（slug 同 publish 话题名），并按 `checkpoint.md` 模板写入初版 `STATE.md`——工作目录约定、STATE.md 格式、各阶段存档点全部见 `references/checkpoint.md`（**必读**）
 2. 每个子 Agent 的 prompt 末尾加一段：
-   > 把完整调研结果（含全部来源链接）写入文件 `/tmp/ray-research/{slug}/agent-{x}.md`，**写完后在文件最后一行单独写 `<!-- RESEARCH-COMPLETE -->` 作为完成标记**，然后在返回消息里只写 ≤500 字核心摘要 + 这个文件路径。
-3. Stage 2 整合时：主 Agent 用 Read 读全部 `agent-*.md` 落盘文件（**不要只凭返回摘要整合**），整合大纲写入同目录 `outline.md`
-4. 失败重试时，旧文件就是"上次调研到哪了"的证据，重派的 Agent 可以接着补
+   > 把完整调研结果（含全部来源链接）写入文件 `~/.cache/ray-deep-research/{slug}/agent-{x}.md`，**写完后在文件最后一行单独写 `<!-- RESEARCH-COMPLETE -->` 作为完成标记**，然后在返回消息里只写 ≤500 字核心摘要 + 这个文件路径。
+3. 每个子 Agent 完成 → 在 `STATE.md` 的 Stage 1 行给该维度打 ✅
+4. Stage 2 整合时：主 Agent 用 Read 读全部 `agent-*.md` 落盘文件（**不要只凭返回摘要整合**），整合大纲写入同目录 `outline.md`
+5. 失败重试时，旧文件就是"上次调研到哪了"的证据，重派的 Agent 可以接着补
 
 ## 断点续跑（限流 / 会话中断后重跑，dispatch 前必查）
 
 **为什么**：多代理调研最痛的翻车是跑到一半撞上限流或会话中断，重开后从零全部重跑——已完成的子 Agent 成果全部作废。落盘文件 + 完成标记就是存档点，重跑只补缺的部分。
 
 **怎么做**（每次 dispatch 前，先做这个检查再派 Agent）：
-1. `ls /tmp/ray-research/{slug}/` —— 目录不存在或为空 → 全新开跑，走正常流程
+1. `ls ~/.cache/ray-deep-research/{slug}/` —— 目录不存在或为空 → 全新开跑，走正常流程（若旧版路径 `/tmp/ray-research/{slug}/` 里有存档，先整体搬过来再继续）
 2. 目录里有 `agent-*.md` → 逐个检查末尾是否有 `<!-- RESEARCH-COMPLETE -->` 标记：
    - **有标记** = 该维度已完成 → 不重派，直接复用文件内容
    - **无标记** = 写了一半的残档 → 该维度重派（残档内容可在新 prompt 里附上作为"已有线索"）
@@ -56,7 +57,13 @@
 4. 若 `outline.md` 也已存在且所有 `agent-*.md` 齐全 → 连 Stage 2 整合都可跳过，直接从 Stage 2.5 数据验证继续
 5. 维度与文件的对应以 preset 中 sub-agent prompts 的顺序为准（`agent-1.md` = 第 1 个 prompt，以此类推）；`--agents N` 数量变化时，按序号对齐，多出来的维度照常新跑
 
-**注意**：/tmp 在 mac 重启后会清空——那种情况检查落空、自然退化为全新开跑，无需特殊处理。同一主题短时间内重跑（限流恢复后）是这个机制的主场景。
+**注意**：本节管的是 Stage 1 内部"维度"粒度的续跑；跨阶段（Stage 2 之后中断）的恢复由 `STATE.md` 总控，规则见 `checkpoint.md` 的"恢复流程"。两层配合：STATE.md 说"现在在哪个阶段"，完成标记说"这个阶段里哪些维度齐了"。
+
+## 单窗口顺序执行（无子 Agent 环境：Codex、扣子等）
+
+部分环境不允许 spawn 子 Agent——此时主 Agent 按 preset 里的子 Agent prompts **逐个顺序执行**同样的调研维度，每个维度照样落盘 `agent-{n}.md` + 完成标记，之后的 Stage 完全不变。顺序执行更耗时，开跑前把预计时长上调（约 1.5-2 倍）并如实告知用户。
+
+**关键风险**：并行模式下原始网页内容消耗在各子 Agent 自己的窗口里，主窗口只收摘要；顺序模式下**所有原文都流经主窗口**——这是单窗口环境爆上下文的头号原因。必须严格执行 `checkpoint.md` 的"边读边炼"五条纪律（一次一个维度、读 1-2 个来源就落盘要点、读过即弃、吃紧主动换班、HTML 分章节写）。
 
 ## 兜底唤醒后的处置（1500s 到点子 Agent 还没齐）
 

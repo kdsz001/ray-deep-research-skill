@@ -4,10 +4,10 @@
 
 ## 前置条件
 
-- HTML 已生成在 `~/Downloads/{name}-research-{YYYYMMDD}.html`
+- HTML 已生成在工作目录 `~/.cache/ray-deep-research/{slug}/report.html`
 - web-access skill 的 CDP Proxy 已运行（如未运行，先 `bash ~/.claude/skills/web-access/scripts/check-deps.sh`）
 
-**sidebar 资源 404 属预期，不要修**：自检阶段报告还在 Downloads，`<head>` 里的 `../assets/sidebar.css` / `sidebar.js` 是为发布后的仓库目录结构准备的相对路径，此时 404 是正常的（静默失败，不影响主体渲染）。不要因此改路径或删注入——发布到 `~/ray-research/{topic}/` 后它们自然生效。
+**sidebar 资源 404 属预期，不要修**：自检阶段报告还在工作目录，`<head>` 里的 `../assets/` 三行引用是为入库/发布后的目录结构准备的相对路径，此时 404 是正常的（静默失败，不影响主体渲染）。不要因此改路径或删注入——Stage 5 进了库（`~/ResearchLibrary/{topic}/` 或 `~/ray-research/{topic}/`）后它们自然生效。
 
 **CDP 起不来时的降级**：check-deps 修复后 CDP 仍不可用 → **跳过本 Stage，照常走 Stage 5 交付**，但交付总结里必须明确写"本次未做视觉自检，建议自己打开报告过一眼"。不要因为自检环节挂了卡住整个交付，也不要假装自检过了。
 
@@ -16,7 +16,7 @@
 ### Step 1 · 在后台 tab 加载 HTML
 
 ```bash
-curl -s "http://localhost:3456/new?url=file://$HOME/Downloads/{file}.html"
+curl -s "http://localhost:3456/new?url=file://$HOME/.cache/ray-deep-research/{slug}/report.html"
 # 拿到 targetId
 ```
 
@@ -64,7 +64,7 @@ curl -s "http://localhost:3456/screenshot?target={ID}&file=/tmp/check-{n}.png"
 
 发现问题 → 用 Edit 工具修 HTML → 不需要重新 dispatch CDP，直接刷新：
 ```bash
-curl -s "http://localhost:3456/navigate?target={ID}&url=file://$HOME/Downloads/{file}.html"
+curl -s "http://localhost:3456/navigate?target={ID}&url=file://$HOME/.cache/ray-deep-research/{slug}/report.html"
 sleep 0.5
 # 重新截图验证
 ```
