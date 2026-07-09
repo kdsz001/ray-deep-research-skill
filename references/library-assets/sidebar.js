@@ -260,6 +260,20 @@
       '— 已降级为原始报告布局（含原章节 TOC）');
   }
 
+  // fetch 失败（典型：file:// 下被浏览器拦截）→ 动态加载 sidebar-data.js 再试。
+  // 这样 <head> 里没有静态 data 引用的旧报告也能被救活，不用改任何旧文件。
+  function loadDataFallback(err) {
+    var s = document.createElement('script');
+    s.src = BASE + 'assets/sidebar-data.js';
+    s.onload = function() {
+      if (window.RS_MANIFEST && typeof window.RS_MANIFEST === 'object') {
+        try { render(sanitizeManifest(window.RS_MANIFEST)); } catch (e) { degrade(e); }
+      } else { degrade(err); }
+    };
+    s.onerror = function() { degrade(err); };
+    document.head.appendChild(s);
+  }
+
   function init() {
     // 本地收藏夹主通道：sidebar-data.js 已把清单挂在 window.RS_MANIFEST
     if (window.RS_MANIFEST && typeof window.RS_MANIFEST === 'object') {
@@ -268,7 +282,7 @@
       } catch (err) { degrade(err); }
       return;
     }
-    // 兜底：http(s) 环境下没有 data 文件时 fetch manifest.json
+    // http(s) 环境下没有静态 data 行时 fetch manifest.json；fetch 被拦再走动态兜底
     fetch(MANIFEST_URL, { cache: 'no-cache' })
       .then(function(res) {
         if (!res.ok) throw new Error('manifest HTTP ' + res.status);
@@ -278,7 +292,7 @@
         var clean = sanitizeManifest(raw);
         render(clean);
       })
-      .catch(degrade);
+      .catch(loadDataFallback);
   }
 
   // 即使 fetch 失败，也要确保 body 没有残留 rs-active（HTML 静态写了 class 时）
