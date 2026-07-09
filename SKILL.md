@@ -116,7 +116,8 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 按 preset 中的 sub-agent prompts 章节，**一次性 dispatch 所有子 Agent 进入 background**。
 
 子 Agent 调度规则详见 `references/agent-orchestration.md`。核心原则：
-- dispatch 前先 `mkdir -p /tmp/ray-research/{slug}`，每个子 Agent 的 prompt 末尾指定输出文件路径（完整结果写文件，返回消息只要 ≤500 字摘要）——防长任务上下文压缩丢素材
+- dispatch 前先 `mkdir -p /tmp/ray-research/{slug}`，每个子 Agent 的 prompt 末尾指定输出文件路径（完整结果写文件 + 末尾写 `<!-- RESEARCH-COMPLETE -->` 完成标记，返回消息只要 ≤500 字摘要）——防长任务上下文压缩丢素材
+- **断点续跑检查（dispatch 前必做）**：若 `/tmp/ray-research/{slug}/` 已有带完成标记的 `agent-*.md`（上次限流/中断留下的存档），只补跑缺失维度，不整轮重跑——规则见 `agent-orchestration.md` 的"断点续跑"一节
 - 主 Agent 同时抓官网/主页核心事实（不要等子 Agent）
 - 子 Agent 数量 = Stage 0 第 4 步判断结果（不再写死 preset 默认）
 - 全部 `run_in_background: true`
@@ -247,7 +248,8 @@ description: Ray 的深度调研引擎。任意主题（产品 / 公司 / 赛道
 - [ ] 主题已确认 + preset 已选择 + 已告诉用户预计时长
 - [ ] Stage 0.5 复用检查已做（仓库有 ≤30 天同主题报告则已问用户：重做 / 只更新 / 看旧版）
 - [ ] 已按 Stage 0 表格判定的数量并行 dispatch 子 Agent
-- [ ] 子 Agent 结果已落盘 `/tmp/ray-research/{slug}/agent-*.md`，整合大纲已写 `outline.md`
+- [ ] dispatch 前已做断点续跑检查（有上次中断的存档则只补跑缺失维度，并已告知用户）
+- [ ] 子 Agent 结果已落盘 `/tmp/ray-research/{slug}/agent-*.md`（每个文件末尾有完成标记），整合大纲已写 `outline.md`
 - [ ] 主 Agent 同时抓了官网核心事实
 - [ ] ScheduleWakeup 兜底已设置
 - [ ] 所有子 Agent 完成后才开始整合
