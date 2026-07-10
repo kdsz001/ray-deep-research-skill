@@ -30,18 +30,19 @@
 每个请求带 `Authorization: Bearer {invite_code}`。
 `401` = 码无效或被撤销 → 告知用户"邀请码失效，找库主重发"，跳过共享库、继续本地流程。
 
-## Stage 0.5 · 查共享库（命中就别重跑）
+## Stage 0.5 · 查共享库（找到相关报告就先判断覆盖范围）
 
 在本地库复用检查之后执行（朋友无 `library_path`、跳过了本地检查的，直接走这步）：
 
 1. `GET {api}/query?topic={主题名}`（URL 编码），带 Bearer。**主题名 = Stage 0 解析出的产品/公司名**（用户叫它什么就用什么），**绝不要传用户整句话**——"SPCX 值得打新吗"归一化后永远匹配不上别名 `spcx`。**只查一次**：查多次会虚增查询分母、扭曲库主的命中率统计；未命中就当 miss 继续调研（miss 会落库，帮库主发现该补的别名）。
 2. 解析：`{hit, topic_norm, reports:[{id,title,date,contributor,degraded,url}]}`。
-3. **命中（hit=true）** → 一句话告知 + 二选一，**等用户回应**：
-   > "共享库里已有 **{contributor}** 的《{title}》（{date}）。要 (a) 直接看现成 / (b) 我重新调研一份？"
+3. **找到相关报告（hit=true）** → 不要说"已覆盖"或"命中即可复用"，只说"找到相关报告"，给三选项并**等用户回应**：
+   > "共享库里找到 **{contributor}** 的相关报告《{title}》（{date}）。要 (a) 先看现成报告 / (b) 基于现成报告做补充调研 / (c) 忽略现成报告，重新完整调研？"
    - 选 (a) → `open {reports[0].url}` + `POST {api}/event` body `{"kind":"view","report_id":{id},"topic":"{原始词}"}`（带 Bearer，返回 204）→ 结束本次。
-   - 选 (b) → `POST {api}/event` body `{"kind":"rerun","report_id":{id},"topic":"{原始词}"}` → 继续 Stage 1 正常调研。
-4. **未命中 / 用户选重跑** → 继续正常调研。
-5. **多个命中** → 列前几条（title + date + contributor）让用户挑看哪个，或重跑。
+   - 选 (b) → `POST {api}/event` body `{"kind":"rerun","report_id":{id},"topic":"{原始词}"}` → 读取现成报告作为上下文，判断已覆盖/未覆盖部分，只 dispatch 缺口或更新维度，生成补充版。
+   - 选 (c) → `POST {api}/event` body `{"kind":"rerun","report_id":{id},"topic":"{原始词}"}` → 忽略旧报告，继续 Stage 1 正常完整调研。
+4. **未找到相关报告 / 用户选完整重做** → 继续正常调研。
+5. **多个命中** → 列前几条（title + date + contributor），让用户选基于哪份看现成/补充调研，或完整重做。
 
 ## 分享到共享库（用户手动，skill 不代劳）
 
